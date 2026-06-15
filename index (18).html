@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام حضور المحاضرين | DIGILIANS</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--navy:#1F4E79;--blue:#2E75B6;--sky:#DEEAF1;--accent:#F0A500;--green:#28A745;--red:#DC3545;--bg:#F4F7FC;--text:#1a2a3a;--card-bg:#ffffff;--input-bg:#fafbff;--input-border:#dde3ee;--shadow:0 8px 32px rgba(31,78,121,0.13);}
+body.dark-mode{--bg:#0F172A;--text:#F1F5F9;--sky:#1E293B;--card-bg:#1E293B;--input-bg:#151F32;--input-border:#334155;--shadow:0 8px 32px rgba(0,0,0,0.4);}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body,.lec-card,.table-card,.instructions-card,.stat-card,select,input,.tabs,.tab,header{transition:background-color 0.3s ease,color 0.3s ease,border-color 0.3s ease,box-shadow 0.3s ease;}
+.theme-toggle-btn{position:fixed;left:20px;top:20px;z-index:9999;background:var(--card-bg);color:var(--text);border:2px solid var(--blue);border-radius:50%;width:45px;height:45px;font-size:1.25rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(0,0,0,0.15);}
+.theme-toggle-btn:hover{transform:scale(1.05);}
+#login-view{min-height:100vh;background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 60%,#4a90d9 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+body.dark-mode #login-view{background:linear-gradient(135deg,#0F172A 0%,#152238 60%,#1E293B 100%);}
+.login-card{background:var(--card-bg);border-radius:24px;padding:40px 36px;box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:420px;}
+.login-logo{text-align:center;margin-bottom:24px;display:flex;flex-direction:column;align-items:center;}
+.login-logo h1{color:var(--navy);font-size:1.4rem;font-weight:900;margin-top:12px;}
+body.dark-mode .login-logo h1{color:#FFFFFF;}
+.login-logo p{font-weight:800;color:var(--blue);letter-spacing:0.5px;margin-top:6px;font-size:0.85rem;}
+body.dark-mode .login-logo p{color:#93c5fd;}
+.live-badge{display:inline-flex;align-items:center;gap:6px;background:var(--sky);color:var(--navy);border-radius:20px;padding:6px 14px;font-size:0.82rem;font-weight:700;margin-bottom:20px;}
+body.dark-mode .live-badge{color:#F1F5F9;}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-weight:700;margin-bottom:7px;color:var(--navy);font-size:0.92rem;}
+body.dark-mode .form-group label{color:#cbd5e1;}
+.form-group input,.form-group select{width:100%;padding:13px 16px;border:2px solid var(--input-border);border-radius:12px;font-family:'Cairo',sans-serif;font-size:0.95rem;color:var(--text);background:var(--input-bg);}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue);}
+.btn-login-submit{width:100%;padding:14px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;border:none;border-radius:14px;font-family:'Cairo',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.btn-login-submit:hover{opacity:0.9;transform:translateY(-1px);}
+.login-error-msg{display:none;background:#fff0f0;border:2px solid var(--red);border-radius:10px;padding:10px;text-align:center;color:var(--red);font-size:0.85rem;margin-top:12px;}
+body.dark-mode .login-error-msg{background:#2d0a0a;}
+.admin-link{text-align:center;margin-top:20px;font-size:0.78rem;color:rgba(255,255,255,0.5);cursor:pointer;user-select:none;}
+.admin-link:hover{color:rgba(255,255,255,0.8);}
+.mode-toggle{display:flex;background:rgba(255,255,255,0.12);border-radius:12px;padding:4px;margin-bottom:20px;gap:4px;}
+.mode-btn{flex:1;padding:9px;border:none;border-radius:9px;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;background:transparent;color:rgba(255,255,255,0.6);transition:all 0.2s;}
+.mode-btn.active{background:white;color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+.guest-form{display:none;}
+.guest-form.visible{display:block;}
+.login-form-fields{display:block;}
+.login-form-fields.hidden{display:none;}
+#lecturer-view{min-height:100vh;background:linear-gradient(135deg,#1F4E79 0%,#2E75B6 60%,#4a90d9 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+body.dark-mode #lecturer-view{background:linear-gradient(135deg,#0F172A 0%,#152238 60%,#1E293B 100%);}
+.lec-card{background:var(--card-bg);border-radius:24px;padding:40px 36px;box-shadow:0 20px 60px rgba(0,0,0,0.2);width:100%;max-width:460px;}
+.lec-logo{text-align:center;margin-bottom:20px;display:flex;flex-direction:column;align-items:center;}
+.lec-logo h1{color:var(--navy);font-size:1.4rem;font-weight:900;margin-top:12px;}
+body.dark-mode .lec-logo h1{color:#FFFFFF;}
+.welcome-name{color:var(--blue);font-weight:700;font-size:1rem;margin-top:4px;}
+body.dark-mode .welcome-name{color:#93c5fd;}
+.action-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+.btn-attend{background:linear-gradient(135deg,#28A745,#20c997);color:white;padding:16px;border-radius:14px;font-size:1.05rem;font-weight:700;cursor:pointer;border:none;font-family:'Cairo',sans-serif;transition:all 0.2s;}
+.btn-leave{background:linear-gradient(135deg,#DC3545,#e74c5f);color:white;padding:16px;border-radius:14px;font-size:1.05rem;font-weight:700;cursor:pointer;border:none;font-family:'Cairo',sans-serif;transition:all 0.2s;}
+.btn-attend:hover,.btn-leave:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.18);}
+.btn-attend:disabled,.btn-leave:disabled{opacity:0.3;cursor:not-allowed;transform:none;box-shadow:none;}
+.success-msg{display:none;background:linear-gradient(135deg,#e8f8ee,#d4f4e0);border:2px solid var(--green);border-radius:14px;padding:20px;text-align:center;margin-top:18px;}
+body.dark-mode .success-msg{background:linear-gradient(135deg,#064e3b,#022c22);}
+.success-msg .s-icon{font-size:2.5rem;}
+.success-msg h3{color:var(--green);font-size:1.05rem;margin-top:6px;}
+.success-msg p{color:#444;font-size:0.85rem;margin-top:5px;}
+body.dark-mode .success-msg p{color:#e2e8f0;}
+.status-hint{text-align:center;margin-top:12px;font-size:0.82rem;font-weight:700;padding:8px 14px;border-radius:10px;display:none;transition:all 0.3s ease;}
+.status-hint.attended{background:#d4edda;color:#155724;display:block;}
+body.dark-mode .status-hint.attended{background:#064e3b;color:#a7f3d0;}
+.status-hint.left{background:#f8d7da;color:#721c24;display:block;}
+body.dark-mode .status-hint.left{background:#7f1d1d;color:#fca5a5;}
+.status-hint.waiting{background:#fff3cd;color:#856404;display:block;}
+body.dark-mode .status-hint.waiting{background:#78350f;color:#fde68a;}
+.lec-date-display{background:var(--sky);border-radius:10px;padding:8px 16px;text-align:center;font-size:0.85rem;font-weight:700;color:var(--navy);margin-bottom:16px;}
+body.dark-mode .lec-date-display{color:#F1F5F9;}
+.btn-lec-logout{background:none;border:2px solid rgba(255,255,255,0.4);color:rgba(255,255,255,0.7);border-radius:10px;padding:6px 16px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.8rem;font-weight:700;margin-top:16px;width:100%;}
+.btn-lec-logout:hover{background:rgba(255,255,255,0.1);}
+#admin-view{display:none;min-height:100vh;}
+header{background:linear-gradient(135deg,var(--navy),var(--blue));color:white;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(31,78,121,0.3);}
+body.dark-mode header{background:linear-gradient(135deg,#0F172A,#1E293B);border-bottom:1px solid #334155;}
+header h1{font-size:1.3rem;font-weight:900;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.live-time{background:rgba(255,255,255,0.15);border-radius:10px;padding:7px 14px;font-weight:700;font-size:0.95rem;text-align:center;}
+.btn-logout{background:rgba(255,255,255,0.2);color:white;border:2px solid rgba(255,255,255,0.4);border-radius:10px;padding:7px 16px;cursor:pointer;font-family:'Cairo',sans-serif;font-size:0.85rem;font-weight:700;}
+.tabs{display:flex;background:var(--card-bg);border-bottom:3px solid var(--sky);padding:0 28px;gap:4px;overflow-x:auto;}
+.tab{padding:13px 22px;cursor:pointer;font-weight:700;font-size:0.9rem;color:#666;border-bottom:3px solid transparent;margin-bottom:-3px;white-space:nowrap;}
+body.dark-mode .tab{color:#94a3b8;}
+.tab.active{color:var(--navy);border-bottom-color:var(--accent);}
+body.dark-mode .tab.active{color:var(--accent);}
+.content{display:none;padding:28px;max-width:1100px;margin:0 auto;}
+.content.active{display:block;}
+.qr-wrapper{display:grid;grid-template-columns:auto 1fr;gap:32px;align-items:start;}
+.qr-card{background:var(--card-bg);border-radius:20px;padding:28px;box-shadow:var(--shadow);text-align:center;min-width:260px;}
+.qr-card h2{color:var(--navy);font-size:1.1rem;margin-bottom:18px;}
+body.dark-mode .qr-card h2{color:#f1f5f9;}
+#qr-container{display:inline-flex;padding:14px;background:white !important;border:4px solid var(--sky);border-radius:12px;margin-bottom:16px;}
+.qr-note{background:var(--sky);border-radius:8px;padding:10px 12px;font-size:0.78rem;color:var(--navy);margin-bottom:14px;word-break:break-all;}
+body.dark-mode .qr-note{color:#f8fafc;}
+.btn{display:inline-block;padding:9px 20px;border-radius:10px;font-family:'Cairo',sans-serif;font-weight:700;font-size:0.88rem;cursor:pointer;border:none;transition:all 0.2s;}
+.btn-primary{background:var(--navy);color:white;}.btn-primary:hover{background:var(--blue);}
+.btn-accent{background:var(--accent);color:white;}
+.btn-green{background:var(--green);color:white;}
+.btn-red{background:var(--red);color:white;}
+.btn-outline{background:transparent;color:var(--navy);border:2px solid var(--navy);}
+body.dark-mode .btn-outline{color:#f8fafc;border-color:#475569;}
+.instructions-card{background:var(--card-bg);border-radius:20px;padding:28px;box-shadow:var(--shadow);}
+.instructions-card h3{color:var(--navy);margin-bottom:18px;}
+body.dark-mode .instructions-card h3{color:#f1f5f9;}
+.step{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;padding:12px;background:var(--sky);border-radius:10px;}
+.step-num{background:var(--navy);color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0;}
+.step p{font-size:0.9rem;line-height:1.6;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:28px;}
+.stat-card{background:var(--card-bg);border-radius:16px;padding:22px;box-shadow:var(--shadow);text-align:center;border-top:4px solid var(--blue);}
+.stat-card .num{font-size:2rem;font-weight:900;color:var(--navy);}
+body.dark-mode .stat-card .num{color:#FFFFFF;}
+.stat-card .lbl{font-size:0.82rem;color:#666;margin-top:4px;}
+body.dark-mode .stat-card .lbl{color:#94a3b8;}
+.table-card{background:var(--card-bg);border-radius:20px;padding:26px;box-shadow:var(--shadow);}
+.table-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.table-header h2{color:var(--navy);font-size:1.1rem;}
+body.dark-mode .table-header h2{color:#f1f5f9;}
+.tbl-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.records-count{background:var(--sky);color:var(--navy);padding:5px 12px;border-radius:20px;font-weight:700;font-size:0.82rem;}
+body.dark-mode .records-count{color:#ffffff;}
+.filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-row select,.filter-row input{padding:8px 12px;border:2px solid var(--input-border);border-radius:8px;font-family:'Cairo',sans-serif;font-size:0.85rem;color:var(--text);background:var(--input-bg);}
+table{width:100%;border-collapse:collapse;}
+thead th{background:var(--navy);color:white;padding:11px 14px;text-align:center;font-size:0.88rem;font-weight:700;}
+body.dark-mode thead th{background:#334155;}
+tbody tr:nth-child(even){background:var(--sky);}
+body.dark-mode tbody tr:nth-child(even){background:#151F32;}
+tbody tr:hover{background:#d0e4f5;}
+body.dark-mode tbody tr:hover{background:#334155;}
+tbody td{padding:10px 14px;text-align:center;font-size:0.88rem;border-bottom:1px solid #e8eef5;}
+body.dark-mode tbody td{border-bottom-color:#334155;}
+.badge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:0.78rem;font-weight:700;}
+.badge-attend{background:#d4edda;color:#155724;}
+.badge-leave{background:#f8d7da;color:#721c24;}
+.badge-both{background:#d1ecf1;color:#0c5460;}
+.del-btn{background:none;border:none;cursor:pointer;color:#ccc;font-size:1rem;transition:color 0.2s;}
+.del-btn:hover{color:var(--red);}
+.empty-state{text-align:center;padding:40px;color:#aaa;}
+.empty-state .icon{font-size:2.5rem;margin-bottom:10px;}
+#admin-login-overlay{position:fixed;inset:0;z-index:1000;background:linear-gradient(135deg,#1F4E79,#2E75B6);display:none;align-items:center;justify-content:center;padding:24px;}
+body.dark-mode #admin-login-overlay{background:linear-gradient(135deg,#0F172A,#152238);}
+.admin-login-box{background:var(--card-bg);border-radius:24px;padding:40px 36px;box-shadow:0 20px 60px rgba(0,0,0,0.3);width:100%;max-width:380px;text-align:center;}
+.admin-login-box .lock-icon{font-size:3rem;margin-bottom:12px;}
+.admin-login-box h2{color:var(--navy);font-size:1.3rem;font-weight:900;margin-bottom:6px;}
+body.dark-mode .admin-login-box h2{color:#ffffff;}
+.admin-login-box p{color:#666;font-size:0.85rem;margin-bottom:24px;}
+body.dark-mode .admin-login-box p{color:#94a3b8;}
+.admin-login-box input{width:100%;padding:14px 16px;border:2px solid var(--input-border);border-radius:12px;font-family:'Cairo',sans-serif;font-size:1rem;text-align:center;letter-spacing:4px;margin-bottom:14px;background:var(--input-bg);color:var(--text);}
+.btn-admin-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--navy),var(--blue));color:white;border:none;border-radius:12px;font-family:'Cairo',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;}
+.admin-login-error{color:var(--red);font-size:0.85rem;margin-top:10px;display:none;}
+.btn-back-lec{margin-top:14px;background:none;border:2px solid var(--input-border);color:#666;border-radius:10px;padding:9px 18px;font-family:'Cairo',sans-serif;font-size:0.85rem;cursor:pointer;font-weight:700;width:100%;}
+body.dark-mode .btn-back-lec{color:#94a3b8;}
+.session-card{background:var(--sky);border-radius:14px;padding:14px 16px;margin-bottom:10px;border-right:4px solid var(--blue);}
+body.dark-mode .session-card{background:#1a2f4a;border-right-color:var(--accent);}
+.session-card.done{border-right-color:var(--green);opacity:0.75;}
+.session-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.session-tag{font-size:0.78rem;font-weight:700;color:var(--navy);background:white;padding:3px 10px;border-radius:20px;}
+body.dark-mode .session-tag{background:#0f172a;color:#93c5fd;}
+.session-info{font-size:0.82rem;color:#555;margin-bottom:10px;line-height:1.7;}
+body.dark-mode .session-info{color:#94a3b8;}
+.session-loc{font-size:0.75rem;color:#888;word-break:break-all;}
+.btn-end-session{background:linear-gradient(135deg,#DC3545,#e74c5f);color:white;padding:8px 16px;border-radius:10px;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;font-family:'Cairo',sans-serif;width:100%;}
+.btn-end-session:disabled{opacity:0.4;cursor:not-allowed;}
+.sessions-title{font-size:0.82rem;font-weight:700;color:var(--navy);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--sky);}
+body.dark-mode .sessions-title{color:#93c5fd;border-bottom-color:#334155;}
+@media(max-width:768px){.qr-wrapper{grid-template-columns:1fr;}.content{padding:16px;}.lec-card,.login-card{padding:28px 20px;}header{padding:14px;flex-direction:column;gap:10px;text-align:center;}.action-btns{grid-template-columns:1fr;}}
+@media print{header,.tabs,.instructions-card,.theme-toggle-btn{display:none!important;}.qr-card{box-shadow:none;border:2px solid #ccc;}}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle-btn" id="dark-mode-toggle" onclick="toggleDarkMode()" title="تغيير المظهر">🌙</button>
+
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="70" height="70" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter:drop-shadow(0px 6px 12px rgba(46,117,182,0.35));">
+        <path d="M22 20H55C71.5685 20 85 33.4315 85 50C85 66.5685 71.5685 80 55 80H22V20Z" fill="url(#digiGrad1)"/>
+        <path d="M40 36H55C62.732 36 69 42.268 69 50C69 57.732 62.732 64 55 64H40V36Z" fill="#FFFFFF"/>
+        <circle cx="55" cy="50" r="7" fill="#F0A500"/>
+        <circle cx="22" cy="20" r="4.5" fill="#2E75B6"/>
+        <circle cx="22" cy="80" r="4.5" fill="#2E75B6"/>
+        <defs><linearGradient id="digiGrad1" x1="22" y1="20" x2="85" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#1F4E79"/><stop offset="1" stop-color="#2E75B6"/></linearGradient></defs>
+      </svg>
+      <h1>تسجيل الدخول</h1>
+      <p>DIGILIANS TRACK</p>
+    </div>
+    <div style="text-align:center;margin-bottom:20px;">
+      <span class="live-badge"><span class="live-dot"></span><span id="login-live-time">--:--</span></span>
+    </div>
+
+    <!-- MODE TOGGLE -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-btn-instructor" onclick="switchMode('instructor')">👨‍🏫 Instructor</button>
+      <button class="mode-btn" id="mode-btn-substitute" onclick="switchMode('substitute')">🔄 Substitute</button>
+    </div>
+
+    <!-- INSTRUCTOR LOGIN -->
+    <div class="login-form-fields" id="instructor-fields">
+      <div class="form-group">
+        <label>👤 اسم المستخدم</label>
+        <input type="text" id="login-username" placeholder="أدخل اسم المستخدم" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
+      </div>
+      <div class="form-group">
+        <label>🔒 كلمة المرور</label>
+        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-login-submit" onclick="doLogin()">دخول</button>
+      <div class="login-error-msg" id="login-error-msg">❌ اسم المستخدم أو كلمة المرور غلط</div>
+    </div>
+
+    <!-- SUBSTITUTE LOGIN -->
+    <div class="guest-form" id="substitute-fields">
+      <div class="form-group">
+        <label>✍️ اسمك أنت (المحاضر البديل)</label>
+        <input type="text" id="sub-name" placeholder="أدخل اسمك الكامل">
+      </div>
+      <div class="form-group">
+        <label>👨‍🏫 اسم المحاضر اللي جي مكانه</label>
+        <input type="text" id="sub-original-name" placeholder="اسم المحاضر الأصلي">
+      </div>
+      <div class="form-group">
+        <label>🏢 اسم الشركة</label>
+        <select id="sub-company" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار الشركة --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>🏗️ اسم المبنى</label>
+        <select id="sub-building" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار المبنى --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>🏫 اسم اللاب</label>
+        <select id="sub-lab" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار اللاب --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>🎯 اسم التراك</label>
+        <select id="sub-track" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار التراك --</option>
+        </select>
+      </div>
+      <div id="sub-dropdown-loading" style="text-align:center;font-size:0.82rem;color:#888;margin-bottom:8px;display:none;">⏳ جاري تحميل البيانات...</div>
+      <button class="btn-login-submit" onclick="doSubstituteLogin()">🔄 دخول كـ Substitute</button>
+      <div class="login-error-msg" id="sub-error-msg">❌ من فضلك اكمل كل البيانات</div>
+    </div>
+  </div>
+  <div class="admin-link" onclick="showAdminLoginOverlay()">⚙ دخول الإدارة</div>
+</div>
+
+<div id="lecturer-view">
+  <div class="lec-card" style="max-width:520px;">
+    <div class="lec-logo">
+      <svg width="60" height="60" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 20H55C71.5685 20 85 33.4315 85 50C85 66.5685 71.5685 80 55 80H22V20Z" fill="url(#digiGrad2)"/>
+        <path d="M40 36H55C62.732 36 69 42.268 69 50C69 57.732 62.732 64 55 64H40V36Z" fill="#FFFFFF"/>
+        <circle cx="55" cy="50" r="7" fill="#F0A500"/>
+        <defs><linearGradient id="digiGrad2" x1="22" y1="20" x2="85" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#1F4E79"/><stop offset="1" stop-color="#2E75B6"/></linearGradient></defs>
+      </svg>
+      <h1>تسجيل الحضور والانصراف</h1>
+      <p class="welcome-name" id="welcome-name">أهلاً!</p>
+    </div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <span class="live-badge"><span class="live-dot"></span><span id="lec-live-time">--:--</span></span>
+    </div>
+    <div class="lec-date-display" id="lec-date-display">📅 --/--/----</div>
+
+    <!-- NEW SESSION FORM -->
+    <div id="new-session-form" style="margin-top:12px;">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.88rem;">🏢 اسم الشركة</label>
+        <select id="input-company" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار الشركة --</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.88rem;">🏗️ اسم المبنى</label>
+        <select id="input-building" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار المبنى --</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.88rem;">🏫 اسم اللاب</label>
+        <select id="input-lab" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار اللاب --</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:0.88rem;">🎯 اسم التراك</label>
+        <select id="input-track" style="width:100%;padding:11px 14px;border:2px solid var(--input-border);border-radius:10px;font-family:'Cairo',sans-serif;font-size:0.92rem;color:var(--text);background:var(--input-bg);cursor:pointer;">
+          <option value="">-- اختار التراك --</option>
+        </select>
+      </div>
+      <div id="dropdown-loading" style="text-align:center;font-size:0.82rem;color:#888;margin-bottom:8px;display:none;">⏳ جاري تحميل البيانات...</div>
+      <button class="btn-attend" id="btn-attend" onclick="startSession()" style="width:100%;margin-bottom:8px;">✅ بدء السيشن وتسجيل الحضور</button>
+    </div>
+
+    <!-- ACTIVE SESSIONS LIST -->
+    <div id="active-sessions-wrap" style="margin-top:8px;">
+      <div id="active-sessions-list"></div>
+    </div>
+
+    <div class="success-msg" id="lec-success" style="margin-top:12px;">
+      <div class="s-icon" id="s-icon">✅</div>
+      <h3 id="s-title">تم التسجيل بنجاح!</h3>
+      <p id="s-detail"></p>
+    </div>
+    <button class="btn-lec-logout" onclick="lecturerLogout()" style="margin-top:14px;">🚪 تسجيل خروج</button>
+    <div style="text-align:center;margin-top:10px;">
+      <span onclick="showAdminLoginOverlay()" style="font-size:0.78rem;color:rgba(255,255,255,0.45);cursor:pointer;font-weight:700;letter-spacing:0.5px;">⚙ دخول الإدارة</span>
+    </div>
+  </div>
+</div>
+
+<div id="admin-login-overlay">
+  <div class="admin-login-box">
+    <div class="lock-icon">🔐</div>
+    <h2>لوحة الإدارة</h2>
+    <p>أدخل كلمة مرور الأدمن</p>
+    <input type="password" id="admin-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminLogin()">
+    <button class="btn-admin-login" onclick="checkAdminLogin()">دخول</button>
+    <div class="admin-login-error" id="admin-login-error">❌ كلمة المرور غلط</div>
+    <button class="btn-back-lec" onclick="hideAdminLoginOverlay()">← رجوع</button>
+  </div>
+</div>
+
+<div id="admin-view">
+  <header>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="32" height="32" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22 20H55C71.5685 20 85 33.4315 85 50C85 66.5685 71.5685 80 55 80H22V20Z" fill="#FFFFFF"/>
+        <path d="M40 36H55C62.732 36 69 42.268 69 50C69 57.732 62.732 64 55 64H40V36Z" fill="#1F4E79"/>
+        <circle cx="55" cy="50" r="7" fill="#F0A500"/>
+      </svg>
+      <h1>لوحة إدارة الحضور — DIGILIANS</h1>
+    </div>
+    <div class="header-right">
+      <div class="live-time" id="admin-live-time"></div>
+      <button class="btn-logout" onclick="adminLogout()">🚪 خروج</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('tab-qr',this)">📱 QR Code</div>
+    <div class="tab" onclick="showTab('tab-records',this)">📋 السجلات</div>
+    <div class="tab" onclick="showTab('tab-stats',this)">📊 الإحصائيات</div>
+  </div>
+
+  <div id="tab-qr" class="content active">
+    <div class="qr-wrapper">
+      <div class="qr-card">
+        <h2>📲 رمز QR للحضور</h2>
+        <div id="qr-container"></div>
+        <div class="qr-note" id="qr-url-text"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+          <button class="btn btn-accent" onclick="downloadQR()">⬇️ تحميل PNG</button>
+        </div>
+      </div>
+      <div class="instructions-card">
+        <h3>📖 كيفية استخدام النظام</h3>
+        <div class="step"><div class="step-num">1</div><p>اعرض الـ QR Code في القاعة أو اطبعه</p></div>
+        <div class="step"><div class="step-num">2</div><p>المحاضر يمسح الـ QR بكاميرا هاتفه</p></div>
+        <div class="step"><div class="step-num">3</div><p>يدخل username وكلمة المرور الخاصة بيه</p></div>
+        <div class="step"><div class="step-num">4</div><p>يضغط حضور أو انصراف — البيانات بتتحفظ في Google Sheets فوراً</p></div>
+        <div class="step"><div class="step-num">5</div><p>تصدّر السجلات Excel بضغطة واحدة</p></div>
+        <div style="background:#e8f8ee;border:2px solid var(--green);border-radius:10px;padding:14px;margin-top:16px;font-size:0.88rem;">
+          <strong style="color:var(--green);">🛡️ الحماية:</strong> كل محاضر عنده username وpassword خاص — مش يقدر يسجل حضور غيره.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-records" class="content">
+    <div class="table-card">
+      <div class="table-header">
+        <h2>📋 سجل الحضور والانصراف</h2>
+        <div class="tbl-actions">
+          <span class="records-count" id="records-count">0 سجل</span>
+          <button class="btn btn-green" onclick="exportToExcel()">⬇️ Excel</button>
+          <button class="btn btn-primary" onclick="loadRecords()">🔄 تحديث</button>
+        </div>
+      </div>
+      <div class="filter-row">
+        <select id="filter-name" onchange="renderTable()"><option value="">كل المحاضرين</option></select>
+        <select id="filter-type" onchange="renderTable()">
+          <option value="">حضور وانصراف</option>
+          <option>حضور</option>
+          <option>انصراف</option>
+        </select>
+        <input type="date" id="filter-date" onchange="renderTable()">
+        <button class="btn btn-outline" onclick="clearFilters()" style="font-size:0.8rem;padding:7px 12px;">✕ مسح</button>
+      </div>
+      <div id="table-container"><div class="empty-state"><p>🔄 جاري تحميل البيانات...</p></div></div>
+    </div>
+  </div>
+
+  <div id="tab-stats" class="content">
+    <div class="stats-grid">
+      <div class="stat-card" style="border-top-color:#28A745;"><div class="num" id="stat-total">0</div><div class="lbl">إجمالي السجلات</div></div>
+      <div class="stat-card" style="border-top-color:#2E75B6;"><div class="num" id="stat-attend">0</div><div class="lbl">تسجيلات الحضور</div></div>
+      <div class="stat-card" style="border-top-color:#DC3545;"><div class="num" id="stat-leave">0</div><div class="lbl">تسجيلات الانصراف</div></div>
+      <div class="stat-card" style="border-top-color:#F0A500;"><div class="num" id="stat-hours">0</div><div class="lbl">إجمالي الساعات</div></div>
+    </div>
+    <div class="table-card">
+      <h3 style="color:var(--navy);margin-bottom:16px;font-size:1rem;">📊 ملخص كل محاضر</h3>
+      <div id="summary-table"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_PASSWORD = 'admin2025';
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzdBiGQq80_P21tVB6EyzjlD8TfycI3HTurfnsc9pFIQGTaEEJ0cDJKCPzS3_DlnNpt/exec";
+
+let records = [];
+let lecturers = [];
+let currentLecturer = null;
+
+// ================================================================
+// HELPERS
+// ================================================================
+function normalizeDate(val) {
+  if (!val) return '';
+  let s = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  const parts = s.split('/');
+  if (parts.length === 3) {
+    const [mo, da, ye] = parts;
+    if (ye && ye.length === 4) {
+      return `${ye}-${mo.padStart(2,'0')}-${da.padStart(2,'0')}`;
+    }
+  }
+  return s;
+}
+
+function getTodayStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// ================================================================
+// DARK MODE
+// ================================================================
+function toggleDarkMode(){
+  const isDark = document.body.classList.toggle('dark-mode');
+  localStorage.setItem('digi_dark_mode', isDark ? 'enabled' : 'disabled');
+  document.getElementById('dark-mode-toggle').textContent = isDark ? '☀️' : '🌙';
+}
+if(localStorage.getItem('digi_dark_mode') === 'enabled'){
+  document.body.classList.add('dark-mode');
+  document.getElementById('dark-mode-toggle').textContent = '☀️';
+}
+
+// ================================================================
+// TIME
+// ================================================================
+function updateTimes(){
+  const now = new Date();
+  const t = now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const d = now.toLocaleDateString('ar-EG');
+  ['login-live-time','lec-live-time'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=t; });
+  const el2 = document.getElementById('admin-live-time');
+  if(el2) el2.innerHTML = d + '<br>' + t;
+}
+updateTimes(); setInterval(updateTimes, 1000);
+
+// ================================================================
+// LOAD LECTURERS
+// ================================================================
+function loadLecturers(callback){
+  fetch(SCRIPT_URL + '?action=getLecturers')
+    .then(r => r.json())
+    .then(res => {
+      if(res && res.lecturers) lecturers = res.lecturers;
+      checkSavedSession();
+      if(callback) callback();
+    })
+    .catch(() => {
+      checkSavedSession();
+      if(callback) callback();
+    });
+}
+
+// ================================================================
+// CHECK SAVED SESSION
+// ================================================================
+function checkSavedSession() {
+  const savedUser = localStorage.getItem('saved_username');
+  const savedPass = localStorage.getItem('saved_password');
+  if(savedUser && savedPass && lecturers.length > 0) {
+    const found = lecturers.find(l =>
+      l.username.trim().toLowerCase() === savedUser.toLowerCase() &&
+      l.password.trim() === savedPass
+    );
+    if(found) {
+      currentLecturer = found;
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('lecturer-view').style.display = 'flex';
+      document.getElementById('welcome-name').textContent = 'أهلاً، ' + found.name.split(' ')[0] + '!';
+      document.getElementById('lec-date-display').textContent = '📅 ' + new Date().toLocaleDateString('ar-EG');
+      syncTodayRecords(getTodayStr());
+      loadDropdowns();
+    }
+  }
+}
+
+// ================================================================
+// LECTURER LOGIN
+// ================================================================
+// ================================================================
+// MODE SWITCH (Instructor / Substitute)
+// ================================================================
+function switchMode(mode){
+  const iBtn  = document.getElementById('mode-btn-instructor');
+  const sBtn  = document.getElementById('mode-btn-substitute');
+  const iFields = document.getElementById('instructor-fields');
+  const sFields = document.getElementById('substitute-fields');
+  if(mode === 'substitute'){
+    iBtn.classList.remove('active');
+    sBtn.classList.add('active');
+    iFields.classList.add('hidden');
+    sFields.classList.add('visible');
+    // Load dropdowns for substitute form
+    loadSubstituteDropdowns();
+  } else {
+    sBtn.classList.remove('active');
+    iBtn.classList.add('active');
+    sFields.classList.remove('visible');
+    iFields.classList.remove('hidden');
+  }
+}
+
+function loadSubstituteDropdowns(){
+  document.getElementById('sub-dropdown-loading').style.display = 'block';
+  fetch(SCRIPT_URL + '?action=getDropdowns')
+    .then(r => r.json())
+    .then(res => {
+      document.getElementById('sub-dropdown-loading').style.display = 'none';
+      fillSubSelect('sub-company', res.companies);
+      fillSubSelect('sub-building', res.buildings);
+      fillSubSelect('sub-lab', res.labs);
+      fillSubSelect('sub-track', res.tracks);
+    })
+    .catch(() => { document.getElementById('sub-dropdown-loading').style.display = 'none'; });
+}
+
+function fillSubSelect(id, arr){
+  const sel = document.getElementById(id);
+  const first = sel.options[0];
+  sel.innerHTML = '';
+  sel.appendChild(first);
+  (arr || []).filter(v => v).forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+function doSubstituteLogin(){
+  const subName      = document.getElementById('sub-name').value.trim();
+  const originalName = document.getElementById('sub-original-name').value.trim();
+  const company      = document.getElementById('sub-company').value.trim();
+  const building     = document.getElementById('sub-building').value.trim();
+  const lab          = document.getElementById('sub-lab').value.trim();
+  const track        = document.getElementById('sub-track').value.trim();
+  const errMsg       = document.getElementById('sub-error-msg');
+
+  if(!subName || !originalName || !company || !building || !lab || !track){
+    errMsg.style.display = 'block'; return;
+  }
+  errMsg.style.display = 'none';
+
+  // Store substitute info
+  currentLecturer = {
+    name: subName,
+    username: 'substitute',
+    isSubstitute: true,
+    originalName,
+    prefillCompany: company,
+    prefillBuilding: building,
+    prefillLab: lab,
+    prefillTrack: track
+  };
+
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('lecturer-view').style.display = 'flex';
+  document.getElementById('welcome-name').textContent = '🔄 ' + subName.split(' ')[0] + ' (بديل ' + originalName.split(' ')[0] + ')';
+
+  const now = new Date();
+  document.getElementById('lec-date-display').textContent = '📅 ' + now.toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  syncTodayRecords(getTodayStr());
+  loadDropdowns();
+  // prefill dropdowns for substitute after they load
+  setTimeout(() => {
+    if(currentLecturer && currentLecturer.isSubstitute){
+      const sel = (id, val) => { const s = document.getElementById(id); if(s) s.value = val; };
+      sel('input-company',  currentLecturer.prefillCompany);
+      sel('input-building', currentLecturer.prefillBuilding);
+      sel('input-lab',      currentLecturer.prefillLab);
+      sel('input-track',    currentLecturer.prefillTrack);
+    }
+  }, 1200);
+}
+
+function doLogin(){
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+  const errEl = document.getElementById('login-error-msg');
+  errEl.style.display = 'none';
+  if(!username || !password){ errEl.style.display='block'; return; }
+
+  const found = lecturers.find(l =>
+    l.username.trim().toLowerCase() === username.toLowerCase() &&
+    l.password.trim() === password
+  );
+
+  if(!found){
+    errEl.style.display = 'block';
+    document.getElementById('login-password').value = '';
+    return;
+  }
+
+  localStorage.setItem('saved_username', username);
+  localStorage.setItem('saved_password', password);
+
+  currentLecturer = found;
+  document.getElementById('login-view').style.display = 'none';
+  document.getElementById('lecturer-view').style.display = 'flex';
+  document.getElementById('welcome-name').textContent = 'أهلاً، ' + found.name.split(' ')[0] + '!';
+  document.getElementById('lec-date-display').textContent = '📅 ' + new Date().toLocaleDateString('ar-EG');
+
+  syncTodayRecords(getTodayStr());
+  loadDropdowns();
+}
+
+function syncTodayRecords(date){
+  loadSessionsLocal();
+  renderSessions();
+  fetch(SCRIPT_URL + '?action=get')
+    .then(r => r.json())
+    .then(res => {
+      if(res && res.data && res.data.length > 1){
+        records = res.data.slice(1).map((row,i) => ({
+          id: i, name: String(row[0]).trim(),
+          date: normalizeDate(row[1]), timeIn: String(row[2]).trim(),
+          timeOut: String(row[3]).trim(), duration: String(row[4]).trim(),
+          type: String(row[5]).trim(),
+          lab: String(row[6]||'').trim(), track: String(row[7]||'').trim(),
+          lat: String(row[8]||'').trim(), lng: String(row[9]||'').trim()
+        }));
+      }
+    })
+    .catch(() => {});
+}
+
+function lecturerLogout(){
+  currentLecturer = null;
+  localStorage.removeItem('saved_username');
+  localStorage.removeItem('saved_password');
+  document.getElementById('lecturer-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+}
+
+// ================================================================
+// GPS
+// ================================================================
+let currentLocation = null;
+
+function getLocation(){
+  const btn = document.getElementById('btn-get-loc');
+  const locText = document.getElementById('loc-text');
+  const locIcon = document.getElementById('loc-icon');
+  btn.textContent = '...جاري';
+  btn.disabled = true;
+  if(!navigator.geolocation){
+    locText.textContent = 'المتصفح لا يدعم GPS';
+    locIcon.textContent = '❌';
+    btn.textContent = 'تفعيل GPS'; btn.disabled = false;
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      currentLocation = { lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), acc: Math.round(pos.coords.accuracy) };
+      locText.textContent = `✅ ${currentLocation.lat}, ${currentLocation.lng} (±${currentLocation.acc}م)`;
+      locIcon.textContent = '✅';
+      btn.textContent = 'تحديث'; btn.disabled = false;
+      document.getElementById('location-status').style.borderRight = '3px solid var(--green)';
+    },
+    err => {
+      locText.textContent = 'تعذّر الحصول على الموقع — تأكد من إذن GPS';
+      locIcon.textContent = '⚠️';
+      btn.textContent = 'إعادة المحاولة'; btn.disabled = false;
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+
+// ================================================================
+// MULTI-SESSION MANAGEMENT
+// ================================================================
+let activeSessions = []; // [{id, lab, track, timeIn, location, done, timeOut, duration}]
+
+function getSessionsKey(){
+  return 'sessions_' + (currentLecturer ? currentLecturer.name : '') + '_' + getTodayStr();
+}
+function saveSessionsLocal(){
+  try { localStorage.setItem(getSessionsKey(), JSON.stringify(activeSessions)); } catch(e){}
+}
+function loadSessionsLocal(){
+  try {
+    const v = localStorage.getItem(getSessionsKey());
+    activeSessions = v ? JSON.parse(v) : [];
+  } catch(e){ activeSessions = []; }
+}
+
+// ================================================================
+// LOAD DROPDOWNS FROM SHEET
+// ================================================================
+let dropdownData = { companies: [], buildings: [], labs: [], tracks: [] };
+
+function loadDropdowns(){
+  document.getElementById('dropdown-loading').style.display = 'block';
+  fetch(SCRIPT_URL + '?action=getDropdowns')
+    .then(r => r.json())
+    .then(res => {
+      document.getElementById('dropdown-loading').style.display = 'none';
+      dropdownData = res;
+      fillSelect('input-company', res.companies);
+      fillSelect('input-building', res.buildings);
+      fillSelect('input-lab', res.labs);
+      fillSelect('input-track', res.tracks);
+    })
+    .catch(() => {
+      document.getElementById('dropdown-loading').style.display = 'none';
+    });
+}
+
+function fillSelect(id, arr){
+  const sel = document.getElementById(id);
+  const first = sel.options[0];
+  sel.innerHTML = '';
+  sel.appendChild(first);
+  (arr || []).filter(v => v).forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    sel.appendChild(opt);
+  });
+}
+
+function startSession(){
+  const company  = document.getElementById('input-company').value.trim();
+  const building = document.getElementById('input-building').value.trim();
+  const lab      = document.getElementById('input-lab').value.trim();
+  const track    = document.getElementById('input-track').value.trim();
+  if(!company) { alert('⚠️ اختار الشركة أولاً'); return; }
+  if(!building){ alert('⚠️ اختار المبنى أولاً'); return; }
+  if(!lab)     { alert('⚠️ اختار اللاب أولاً'); return; }
+  if(!track)   { alert('⚠️ اختار التراك أولاً'); return; }
+
+  const now  = new Date();
+  const date = getTodayStr();
+  const time = now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  const session = {
+    id: Date.now(),
+    lab, track, company, building,
+    timeIn: time,
+    done: false,
+    timeOut: '',
+    duration: ''
+  };
+  activeSessions.push(session);
+  saveSessionsLocal();
+
+  // Reset selects
+  document.getElementById('input-company').value = '';
+  document.getElementById('input-building').value = '';
+  document.getElementById('input-lab').value = '';
+  document.getElementById('input-track').value = '';
+
+  // Send to sheets
+  const subNote = currentLecturer.isSubstitute ? ' (بديل ' + currentLecturer.originalName + ')' : '';
+  sendToSheets({
+    name: currentLecturer.name + subNote,
+    date, time,
+    type: 'حضور',
+    lab, track, company, building,
+    duration: '',
+    lat: '', lng: '',
+    sessionId: session.id
+  });
+
+  showSuccessUI('حضور', currentLecturer.name, date, time, '', lab, track);
+  renderSessions();
+}
+
+function endSession(sessionId){
+  const session = activeSessions.find(s => s.id === sessionId);
+  if(!session || session.done) return;
+
+  const now  = new Date();
+  const date = getTodayStr();
+  const time = now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+
+  // Calc duration
+  let duration = '';
+  try {
+    function parseT(tStr){
+      const isPM = tStr.includes('م') || tStr.toLowerCase().includes('pm');
+      const isAM = tStr.includes('ص') || tStr.toLowerCase().includes('am');
+      let [h,m] = tStr.replace(/[^\d:]/g,'').split(':').map(Number);
+      if(isPM && h!==12) h+=12;
+      if(isAM && h===12) h=0;
+      const d=new Date(); d.setHours(h,m,0,0); return d;
+    }
+    let diff = parseT(time) - parseT(session.timeIn);
+    if(diff<0) diff += 86400000;
+    const mins = Math.round(diff/60000);
+    if(mins>0){
+      const hh=Math.floor(mins/60), mm=mins%60;
+      duration = hh>0 ? hh+' ساعة و '+mm+' دقيقة' : mm+' دقيقة';
+    }
+  } catch(e){}
+
+  session.done    = true;
+  session.timeOut = time;
+  session.duration= duration;
+  saveSessionsLocal();
+
+  const subNote2 = currentLecturer.isSubstitute ? ' (بديل ' + currentLecturer.originalName + ')' : '';
+  sendToSheets({
+    name: currentLecturer.name + subNote2,
+    date, time,
+    type: 'انصراف',
+    lab: session.lab, track: session.track,
+    company: session.company||'', building: session.building||'',
+    duration,
+    lat: '', lng: '',
+    sessionId
+  });
+
+  showSuccessUI('انصراف', currentLecturer.name, date, time, duration, session.lab, session.track);
+  renderSessions();
+}
+
+function renderSessions(){
+  const wrap = document.getElementById('active-sessions-list');
+  if(!activeSessions.length){ wrap.innerHTML=''; return; }
+  const open   = activeSessions.filter(s=>!s.done);
+  const closed = activeSessions.filter(s=>s.done);
+  let html = '';
+  if(open.length){
+    html += `<div class="sessions-title">🟢 سيشنات جارية (${open.length})</div>`;
+    open.forEach(s => {
+      html += `<div class="session-card">
+        <div class="session-card-header">
+          <span class="session-tag">🏢 ${s.company||''}</span>
+          <span class="session-tag">🏗️ ${s.building||''}</span>
+        </div>
+        <div class="session-info">
+          🏫 ${s.lab} &nbsp;|&nbsp; 🎯 ${s.track}<br>
+          ⏰ بدأ الساعة: <b>${s.timeIn}</b>
+        </div>
+        <button class="btn-end-session" onclick="endSession(${s.id})">🚪 تسجيل الانصراف لهذا السيشن</button>
+      </div>`;
+    });
+  }
+  if(closed.length){
+    html += `<div class="sessions-title" style="margin-top:12px;">✅ سيشنات منتهية (${closed.length})</div>`;
+    closed.forEach(s => {
+      html += `<div class="session-card done">
+        <div class="session-card-header">
+          <span class="session-tag">🏢 ${s.company||''}</span>
+          <span class="session-tag">🏗️ ${s.building||''}</span>
+        </div>
+        <div class="session-info">
+          🏫 ${s.lab} | 🎯 ${s.track}<br>
+          ⏰ ${s.timeIn} ← ${s.timeOut} | ⏱ ${s.duration||'-'}
+        </div>
+      </div>`;
+    });
+  }
+  wrap.innerHTML = html;
+}
+
+function sendToSheets(data){
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify(data)
+  }).catch(()=>{});
+}
+
+function checkButtonsState(){
+  // kept for compatibility — sessions handle their own state
+  loadSessionsLocal();
+  renderSessions();
+}
+
+function showSuccessUI(type, name, date, time, duration, lab, track){
+  const msg = document.getElementById('lec-success');
+  document.getElementById('s-icon').textContent  = type==='حضور' ? '✅' : '🚪';
+  document.getElementById('s-title').textContent = type==='حضور' ? '✅ تم تسجيل حضورك!' : '🚪 تم تسجيل انصرافك!';
+  let detail = `${name.split(' ')[0]} — ${lab} / ${track} — الساعة ${time}`;
+  if(duration) detail += ' | المدة: ' + duration;
+  document.getElementById('s-detail').textContent = detail;
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display='none'; }, 4000);
+}
+
+// ================================================================
+// ADMIN LOGIN
+// ================================================================
+function showAdminLoginOverlay(){
+  document.getElementById('admin-login-overlay').style.display = 'flex';
+  document.getElementById('admin-pass').value = '';
+  document.getElementById('admin-login-error').style.display = 'none';
+  setTimeout(() => document.getElementById('admin-pass').focus(), 100);
+}
+function hideAdminLoginOverlay(){ document.getElementById('admin-login-overlay').style.display = 'none'; }
+function checkAdminLogin(){
+  const pass = document.getElementById('admin-pass').value;
+  if(pass === ADMIN_PASSWORD){
+    hideAdminLoginOverlay();
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('lecturer-view').style.display = 'none';
+    document.getElementById('admin-view').style.display = 'block';
+    generateQR();
+    loadRecords();
+  } else {
+    document.getElementById('admin-login-error').style.display = 'block';
+    document.getElementById('admin-pass').value = '';
+  }
+}
+function adminLogout(){
+  document.getElementById('admin-view').style.display = 'none';
+  document.getElementById('login-view').style.display = 'flex';
+}
+
+// ================================================================
+// TABS
+// ================================================================
+function showTab(id, el){
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active'); el.classList.add('active');
+  if(id==='tab-records') loadRecords();
+  if(id==='tab-stats'){ if(!records.length) loadRecords(); else renderStats(); }
+}
+
+// ================================================================
+// QR
+// ================================================================
+function generateQR(){
+  const url = window.location.href.split('?')[0].split('#')[0];
+  document.getElementById('qr-url-text').textContent = url;
+  const c = document.getElementById('qr-container');
+  c.innerHTML = '';
+  new QRCode(c, {text:url, width:220, height:220, colorDark:'#1F4E79', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.H});
+}
+function downloadQR(){
+  const canvas = document.querySelector('#qr-container canvas');
+  if(!canvas) return;
+  const a = document.createElement('a'); a.download='qr_attendance.png'; a.href=canvas.toDataURL(); a.click();
+}
+
+// ================================================================
+// LOAD RECORDS (للأدمن)
+// ================================================================
+function loadRecords(){
+  document.getElementById('table-container').innerHTML = '<div class="empty-state"><p>🔄 جاري تحميل البيانات حية من Google Sheets...</p></div>';
+  fetch(SCRIPT_URL + '?action=get')
+    .then(r => r.json())
+    .then(res => {
+      records = [];
+      if(res && res.data && res.data.length > 1){
+        records = res.data.slice(1).map((row,i) => ({
+          id:i, name:String(row[0]).trim(), date:normalizeDate(row[1]),
+          timeIn:String(row[2]).trim(), timeOut:String(row[3]).trim(),
+          duration:String(row[4]).trim(), type:String(row[5]).trim(),
+          lab:String(row[6]||'').trim(), track:String(row[7]||'').trim(),
+          lat:String(row[8]||'').trim(), lng:String(row[9]||'').trim()
+        }));
+      }
+      const names = [...new Set(records.map(r => r.name))];
+      const fn = document.getElementById('filter-name');
+      fn.innerHTML = '<option value="">كل المحاضرين</option>' + names.map(n=>`<option>${n}</option>`).join('');
+      renderTable(); renderStats();
+    })
+    .catch(() => {
+      document.getElementById('table-container').innerHTML = '<div class="empty-state"><div class="icon">❌</div><p>تعذّر تحميل البيانات</p></div>';
+    });
+}
+
+// ================================================================
+// TABLE
+// ================================================================
+function getFiltered(){
+  const name = document.getElementById('filter-name').value.trim();
+  const type = document.getElementById('filter-type').value.trim();
+  const date = document.getElementById('filter-date').value.trim();
+  return records.filter(r => (!name||r.name===name) && (!type||r.type===type) && (!date||r.date===date));
+}
+function renderTable(){
+  const filtered = getFiltered();
+  document.getElementById('records-count').textContent = filtered.length + ' سجل';
+  const c = document.getElementById('table-container');
+  if(!filtered.length){ c.innerHTML='<div class="empty-state"><div class="icon">📭</div><p>لا توجد سجلات</p></div>'; return; }
+  const rows = [...filtered].reverse().map((r,i) =>
+    `<tr>
+      <td>${filtered.length-i}</td>
+      <td style="text-align:right;font-weight:600;font-size:0.82rem;">${r.name}</td>
+      <td>${r.date}</td>
+      <td style="font-size:0.8rem;">${r.lab||'-'}</td>
+      <td style="font-size:0.8rem;">${r.track||'-'}</td>
+      <td>${r.timeIn||'-'}</td>
+      <td>${r.timeOut||'-'}</td>
+      <td>${r.duration||'-'}</td>
+      <td><span class="badge ${r.type==='حضور'?'badge-attend':r.type==='حضور وانصراف'?'badge-both':'badge-leave'}">${r.type}</span></td>
+      <td style="font-size:0.75rem;color:#888;">${r.lat&&r.lng?r.lat+','+r.lng:'-'}</td>
+    </tr>`
+  ).join('');
+  c.innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr><th>م</th><th>اسم المحاضر</th><th>التاريخ</th><th>اللاب</th><th>التراك</th><th>وقت الحضور</th><th>وقت الانصراف</th><th>المدة</th><th>النوع</th><th>الموقع</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+function clearFilters(){
+  document.getElementById('filter-name').value='';
+  document.getElementById('filter-type').value='';
+  document.getElementById('filter-date').value='';
+  renderTable();
+}
+
+// ================================================================
+// STATS
+// ================================================================
+function renderStats(){
+  const attend = records.filter(r=>r.type==='حضور'||r.type==='حضور وانصراف');
+  document.getElementById('stat-total').textContent   = records.length;
+  document.getElementById('stat-attend').textContent  = attend.length;
+  document.getElementById('stat-leave').textContent   = records.filter(r=>r.type==='انصراف'||r.type==='حضور وانصراف').length;
+
+  let totalMin = 0;
+  records.filter(r=>(r.type==='انصراف'||r.type==='حضور وانصراف')&&r.duration).forEach(r=>{
+    const m = r.duration.match(/(\d+)\s*ساعة/);
+    const m2 = r.duration.match(/(\d+)\s*دقيقة/);
+    if(m) totalMin += parseInt(m[1])*60;
+    if(m2) totalMin += parseInt(m2[1]);
+  });
+  const totalH = Math.floor(totalMin/60), totalM = totalMin%60;
+  document.getElementById('stat-hours').textContent = totalH + (totalM>0?'.'+totalM:'') + ' س';
+
+  const byLec = {};
+  records.forEach(r => {
+    if(!byLec[r.name]) byLec[r.name]={attend:0,leave:0,duration:''};
+    if(r.type==='حضور'||r.type==='حضور وانصراف') byLec[r.name].attend++;
+    if(r.type==='انصراف'||r.type==='حضور وانصراف'){ byLec[r.name].leave++; if(r.duration) byLec[r.name].duration=r.duration; }
+  });
+  const rows = Object.entries(byLec).map(([name,d]) =>
+    `<tr>
+      <td style="text-align:right;font-weight:600;">${name}</td>
+      <td><span class="badge badge-attend">${d.attend}</span></td>
+      <td><span class="badge badge-leave">${d.leave}</span></td>
+      <td style="font-size:0.82rem;">${d.duration||'-'}</td>
+    </tr>`
+  ).join('');
+  document.getElementById('summary-table').innerHTML = rows
+    ? `<div style="overflow-x:auto"><table>
+        <thead><tr><th>اسم المحاضر</th><th>مرات الحضور</th><th>مرات الانصراف</th><th>آخر مدة</th></tr></thead>
+        <tbody>${rows}</tbody>
+       </table></div>`
+    : '<div class="empty-state"><div class="icon">📊</div><p>لا توجد بيانات</p></div>';
+}
+
+// ================================================================
+// EXPORT EXCEL
+// ================================================================
+function exportToExcel(){
+  if(!records.length){ alert('لا توجد سجلات'); return; }
+  const data = records.map((r,i) => ({'م':i+1,'اسم المحاضر':r.name,'التاريخ':r.date,'اللاب':r.lab||'','التراك':r.track||'','وقت الحضور':r.timeIn,'وقت الانصراف':r.timeOut,'المدة':r.duration,'النوع':r.type,'خط العرض':r.lat||'','خط الطول':r.lng||''}));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'السجلات');
+  XLSX.writeFile(wb, `سجل_حضور_DIGILIANS_${getTodayStr()}.xlsx`);
+}
+
+// ================================================================
+// INIT
+// ================================================================
+loadLecturers();
+</script>
+</body>
+</html>
